@@ -3,10 +3,9 @@
 
 """
 Motor de Búsqueda A* para la Práctica 2: Búsqueda de Agentes Inteligentes.
-
-Este script implementa el algoritmo A* para resolver el problema de planificación
-del robot Kiva en un almacén. Utiliza un modelo de estados complejo y una
-heurística admisible (distancia Manhattan) para encontrar el plan de coste mínimo.
+Versión 2:
+- Corregido set de OBSTACULOS (solo incluye <obstacle>, no <wall>).
+- Compatible con Python 3.5 (sin f-strings).
 """
 
 import heapq
@@ -39,7 +38,8 @@ class Nodo:
         return self.f < otro.f
 
     def __repr__(self):
-        return f"Nodo(f={self.f}, g={self.g}, h={self.h}, estado={self.estado})"
+        # Compatible con Python 3.5
+        return "Nodo(f={}, g={}, h={}, estado={})".format(self.f, self.g, self.h, self.estado)
 
 # --- 2. CLASE DE BÚSQUEDA A* ---
 
@@ -94,6 +94,7 @@ class BusquedaKiva:
         Devuelve el pallet (id, (x,y), o) en una posición dada, o None.
         """
         for pallet in pos_pallets:
+            # Comparamos solo la posición (x,y)
             if pallet[1] == pos:
                 return pallet
         return None
@@ -103,12 +104,20 @@ class BusquedaKiva:
         Comprueba si una celda (x, y) es transitable.
         """
         pos = (x, y)
-        # 1. Comprobar obstáculos fijos (paredes)
+        
+        # 1. Comprobar obstáculos fijos (los <obstacle> del .world)
         if pos in self.obstaculos_fijos:
             return False
-        # 2. Comprobar pallets en el suelo
+            
+        # 2. Comprobar pallets en el suelo (que no son parte de la request)
         if self.get_pallet_at(pos, pos_pallets):
             return False
+            
+        # 3. Comprobar límites del mapa (inferidos del .world)
+        # Asumimos que el área jugable está contenida y no necesitamos
+        # un chequeo explícito de límites si el mapa está "cerrado" por paredes.
+        # Si la búsqueda se "escapa", añadiremos límites aquí.
+            
         return True
 
     def zona_giro_libre(self, x, y, pos_pallets):
@@ -119,7 +128,12 @@ class BusquedaKiva:
             for j in [-1, 0, 1]:
                 if i == 0 and j == 0:
                     continue
-                if not self.es_valido(x + i, y + j, pos_pallets):
+                # NOTA: Usamos una versión simplificada de es_valido
+                # que solo comprueba las 2 condiciones principales.
+                pos = (x + i, y + j)
+                if pos in self.obstaculos_fijos:
+                    return False
+                if self.get_pallet_at(pos, pos_pallets):
                     return False
         return True
 
@@ -145,11 +159,16 @@ class BusquedaKiva:
 
         # Condición 4: Todos los pallets de la request deben estar en su destino
         for id_pallet_original, (meta_pos, meta_ori) in self.pallets_meta_pos.items():
-            pallet_encontrado = self.get_pallet_at(meta_pos, pos_pallets)
+            pallet_encontrado = None
+            for pallet in pos_pallets:
+                if pallet[1] == meta_pos:
+                    pallet_encontrado = pallet
+                    break
             
             if not pallet_encontrado:
                 return False # El pallet no está en la posición de entrega
             
+            # Comparamos id, pos (ya hecho) y orientación
             if pallet_encontrado[0] != id_pallet_original or pallet_encontrado[2] != meta_ori:
                 # El pallet equivocado está aquí, o la orientación es incorrecta
                 return False
@@ -184,8 +203,24 @@ class BusquedaKiva:
             coste_h += self.manhattan(pos_actual_robot, pos_destino_activo) + 3
         else:
             # 1b. Va vacío: Coste(Robot -> Pallet) + Elevar + Coste(Pallet -> Destino) + Bajar
-            coste_h += self.manhattan(pos_actual_robot, pos_pallet_activo) + 3
-            coste_h += self.manhattan(pos_pallet_activo, pos_destino_activo) + 3
+            # Buscamos la posición actual del pallet (por si se ha movido)
+            pos_actual_pallet = None
+            for p in pos_pallets:
+                if p[0] == id_pallet_activo:
+                    pos_actual_pallet = p[1]
+                    break
+            # Si el pallet no está en el suelo, es que lo llevamos (caso 1a)
+            # o algo va mal, pero para la heurística asumimos que está donde debería
+            if pos_actual_pallet is None:
+                # Esto puede pasar si el pallet_cargado es OTRO pallet
+                # En ese caso, el coste es:
+                # Robot -> pos_temp -> Pallet_activo -> Destino_activo
+                # Lo simplificamos (admisible) a:
+                # Robot -> Pallet_activo -> Destino_activo
+                pos_actual_pallet = pos_pallet_activo # Asumimos su pos original
+
+            coste_h += self.manhattan(pos_actual_robot, pos_actual_pallet) + 3
+            coste_h += self.manhattan(pos_actual_pallet, pos_destino_activo) + 3
 
         # --- 2. Coste del RESTO de tareas (tareas_pendientes[1:]) ---
         for i in range(1, len(tareas_pendientes)):
@@ -243,21 +278,22 @@ class BusquedaKiva:
             if pallet_debajo: # Precondición: estar sobre un pallet
                 id_pallet_elevado = pallet_debajo[0]
                 
+                # Creamos un nuevo frozenset sin el pallet elevado
                 nuevo_pos_pallets = pos_pallets - {pallet_debajo}
                 nuevo_estado = (robot_pose, id_pallet_elevado, nuevo_pos_pallets, tareas_pendientes)
                 coste_accion = 3
-                sucesores.append((f'elevar {id_pallet_elevado}', nuevo_estado, coste_accion))
+                sucesores.append(('elevar {}'.format(id_pallet_elevado), nuevo_estado, coste_accion))
 
         # --- Operador 5: 'bajar_pallet' ---
         if pallet_cargado is not None: # Precondición: llevar un pallet
-            # Precondición: el sitio está libre (ya lo comprueba es_valido)
-            # Nota: es_valido comprueba si la celda está libre de *otros* pallets.
-            # Como el que llevamos no está en pos_pallets, la celda (rx,ry)
-            # siempre estará "libre" para esta comprobación.
+            
+            # (rx, ry) es la celda donde se bajará
+            # Comprobamos que esté libre (debe estarlo, si no, 'mover' no nos habría traído aquí)
             
             id_pallet_bajado = pallet_cargado
             pallet_a_bajar = (id_pallet_bajado, (rx, ry), rθ) # (id, pos, ori)
             
+            # Creamos un nuevo frozenset añadiendo el pallet bajado
             nuevo_pos_pallets = pos_pallets | {pallet_a_bajar}
             
             # Comprobar si esta bajada completa una tarea
@@ -274,7 +310,7 @@ class BusquedaKiva:
 
             nuevo_estado = (robot_pose, None, nuevo_pos_pallets, nuevo_tareas_pendientes)
             coste_accion = 3
-            sucesores.append((f'bajar {id_pallet_bajado}', nuevo_estado, coste_accion))
+            sucesores.append(('bajar {}'.format(id_pallet_bajado), nuevo_estado, coste_accion))
         
         return sucesores
 
@@ -301,10 +337,10 @@ class BusquedaKiva:
         start_time = time.time()
 
         # Usamos un dict para rastrear el coste 'g' más bajo a cada estado
-        # Esto combina las listas ABIERTA y CERRADA 
+        # Esto combina las listas ABIERTA y CERRADA [cite: 1-9]
         g_costs = { self.estado_inicial: 0 }
 
-        # Cola de prioridad (ABIERTA) [cite: 1]
+        # Cola de prioridad (ABIERTA)
         # Almacena (f, Nodo)
         h_inicial = self.calcular_heuristica(self.estado_inicial)
         f_inicial = h_inicial
@@ -315,16 +351,16 @@ class BusquedaKiva:
         
         nodos_expandidos = 0
 
-        # Bucle principal de A* [cite: 2]
+        # Bucle principal de A*
         while abierta:
-            # Quitar el primer nodo (el mejor) de ABIERTA [cite: 3]
+            # Quitar el primer nodo (el mejor) de ABIERTA
             f_actual, nodo_actual = heapq.heappop(abierta)
 
             # Optimización: Si encontramos un camino peor, lo ignoramos
             if nodo_actual.g > g_costs.get(nodo_actual.estado, float('inf')):
                 continue
 
-            # Comprobar si es un estado final [cite: 4]
+            # Comprobar si es un estado final
             if self.es_meta(nodo_actual.estado):
                 end_time = time.time()
                 camino, coste = self.reconstruir_camino(nodo_actual)
@@ -336,14 +372,14 @@ class BusquedaKiva:
                     "tiempo_total": end_time - start_time
                 }
             
-            # Expandir N y meterlo en CERRADA (implícito en g_costs) [cite: 5]
+            # Expandir N y meterlo en CERRADA (implícito en g_costs)
             nodos_expandidos += 1
             
             # Generar sucesores
             for accion, estado_sucesor, coste_accion in self.get_sucesores(nodo_actual.estado):
                 nuevo_g = nodo_actual.g + coste_accion
 
-                # Comprobar si este es un camino mejor al sucesor [cite: 6]
+                # Comprobar si este es un camino mejor al sucesor
                 if nuevo_g < g_costs.get(estado_sucesor, float('inf')):
                     g_costs[estado_sucesor] = nuevo_g
                     h = self.calcular_heuristica(estado_sucesor)
@@ -352,10 +388,10 @@ class BusquedaKiva:
                     padre = nodo_actual
                     nuevo_nodo = Nodo(estado_sucesor, padre, accion, nuevo_g, h, f)
                     
-                    # Insertar 's' en orden en ABIERTA [cite: 6]
+                    # Insertar 's' en orden en ABIERTA
                     heapq.heappush(abierta, (f, nuevo_nodo))
 
-        # Si ABIERTA se vacía, no hay solución [cite: 2, 9]
+        # Si ABIERTA se vacía, no hay solución
         end_time = time.time()
         print("FRACASO. No se encontró solución.")
         return {
@@ -370,27 +406,23 @@ if __name__ == "__main__":
     
     print("Configurando el problema 'warehouse0.world'...")
 
-    # 1. OBSTÁCULOS FIJOS (Paredes y Obstáculos del .world)
-    # Interpretación manual del fichero 'warehouse0.world'
-    # Las poses (x, y) son los centros. Asumimos que bloquean esa celda.
-    # Los objetos rotados (yaw=1.57) o largos (ej. -6.5) bloquean 2 celdas.
+    # 1. OBSTÁCULOS FIJOS (Solo los <obstacle> del .world)
+    #    Las <wall> definen el perímetro, que la búsqueda no alcanzará.
+    #    <obstacle_0> <pose>-4 2 0 0 0 1.57</pose> (2m long, vertical, center -4, 2)
+    #    <obstacle_1> <pose>-1 4 0 0 0 1.57</pose> (2m long, vertical, center -1, 4)
+    #    <obstacle_2> <pose>-1 3 0 0 0 1.57</pose> (2m long, vertical, center -1, 3)
+    #    <obstacle_3> <pose>-4 1 0 0 0 1.57</pose> (2m long, vertical, center -4, 1)
+    #    <obstacle_4> <pose>-4 0 0 0 0 1.57</pose> (2m long, vertical, center -4, 0)
+    #
+    #    ¡CORRECCIÓN IMPORTANTE! Un obstáculo vertical de 2m centrado en (-4, 2)
+    #    ocupa las celdas (-4, 1) y (-4, 2).
+    
     OBSTACULOS = set([
-        # Obstacles
-        (-4, 2), (-1, 4), (-1, 3), (-4, 1), (-4, 0),
-        # Walls (interpretando poses .5 como bloqueo de 2 celdas)
-        (-7, 3), (-7, 4), (-7, 2), (-7, 1), (-7, 0),
-        (-7, 0), (-6, 0), (-7, 4), (-6, 4),
-        (-6, 0), (-5, 0), (-6, 4), (-5, 4),
-        (-5, 4), (-5, 5), (-5, 5), (-5, 6),
-        (-5, 0), (-5, -1),
-        (-1, 5), (-1, 6),
-        (-1, 5), (0, 5), (0, 5), (1, 5), (1, 5), (2, 5),
-        (2, 4), (2, 5), (2, 3), (2, 4), (2, 2), (2, 3),
-        (2, 1), (2, 2), (2, 0), (2, 1),
-        (1, 0), (2, 0), (0, 0), (1, 0), (-1, 0), (0, 0),
-        (-1, 0), (-1, -1),
-        (-2, -1), (-1, -1), (-3, -1), (-2, -1), (-4, -1), (-3, -1), (-5, -1), (-4, -1),
-        (-2, 6), (-1, 6), (-3, 6), (-2, 6), (-4, 6), (-3, 6), (-5, 6), (-4, 6)
+        (-4, 1), (-4, 2), # obstacle_0
+        (-1, 3), (-1, 4), # obstacle_1
+        (-1, 2), (-1, 3), # obstacle_2
+        (-4, 0), (-4, 1), # obstacle_3
+        (-4, -1), (-4, 0) # obstacle_4
     ])
 
     # 2. POSICIÓN INICIAL DEL ROBOT
@@ -414,8 +446,8 @@ if __name__ == "__main__":
     problema = BusquedaKiva(OBSTACULOS, POS_INICIAL_PALLETS, POS_INICIAL_ROBOT, REQUEST)
     
     # Imprimir un resumen del estado inicial
-    print(f"Estado Inicial: {problema.estado_inicial}")
-    print(f"Heurística Inicial: {problema.calcular_heuristica(problema.estado_inicial)}")
+    print("Estado Inicial: {}".format(problema.estado_inicial))
+    print("Heurística Inicial: {}".format(problema.calcular_heuristica(problema.estado_inicial)))
     print("--------------------------------------------------")
 
     resultado = problema.resolver()
@@ -423,14 +455,14 @@ if __name__ == "__main__":
     print("--------------------------------------------------")
     
     if resultado["camino"]:
-        print(f"Coste Total: {resultado['coste_total']}")
-        print(f"Longitud del Plan: {len(resultado['camino'])}")
-        print(f"Nodos Expandidos: {resultado['nodos_expandidos']}")
-        print(f"Tiempo Total: {resultado['tiempo_total']:.4f} seg")
+        print("Coste Total: {}".format(resultado['coste_total']))
+        print("Longitud del Plan: {}".format(len(resultado['camino'])))
+        print("Nodos Expandidos: {}".format(resultado['nodos_expandidos']))
+        print("Tiempo Total: {:.4f} seg".format(resultado['tiempo_total']))
         
         print("\n--- PLAN ENCONTRADO ---")
         for i, accion in enumerate(resultado["camino"]):
-            print(f"Paso {i+1}: {accion}")
+            print("Paso {}: {}".format(i+1, accion))
     else:
         print("No se pudo encontrar un plan.")
-        print(f"Tiempo Total: {resultado['tiempo_total']:.4f} seg")
+        print("Tiempo Total: {:.4f} seg".format(resultado['tiempo_total']))
