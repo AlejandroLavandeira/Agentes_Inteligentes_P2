@@ -5,3 +5,42 @@
 0 | R . . . .
   +----------
     0 1 2 3 4
+--- PLAN ENCONTRADO ---
+Paso 1: mover_adelante
+Paso 2: girar_derecha
+Paso 3: mover_adelante
+Paso 4: mover_adelante
+Paso 5: mover_adelante
+Paso 6: mover_adelante
+Paso 7: girar_izquierda
+Paso 8: mover_adelante
+Paso 9: mover_adelante
+Paso 10: mover_adelante
+Paso 11: girar_derecha
+Paso 12: girar_derecha
+Paso 13: elevar (4, 4)
+Paso 14: mover_adelante
+Paso 15: mover_adelante
+Paso 16: mover_adelante
+Paso 17: bajar (4, 4)
+Paso 18: girar_derecha
+Paso 19: elevar (4, 4)
+Paso 20: mover_adelante
+Paso 21: mover_adelante
+Paso 22: mover_adelante
+Paso 23: mover_adelante
+Paso 24: bajar (4, 4)
+Paso 25: girar_derecha
+Paso 26: elevar (4, 4)
+Paso 27: mover_adelante
+Paso 28: mover_adelante
+Paso 29: mover_adelante
+Paso 30: bajar (4, 4)
+Paso 31: girar_derecha
+Paso 32: girar_derecha
+Paso 33: mover_adelante
+Paso 34: mover_adelante
+Paso 35: mover_adelante
+Paso 36: mover_adelante
+Paso 37: girar_derecha
+Paso 38: girar_derecha
