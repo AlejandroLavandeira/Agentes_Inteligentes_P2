@@ -3,8 +3,10 @@
 
 """
 Motor de Búsqueda A* para la Práctica 2: Búsqueda de Agentes Inteligentes.
-Versión 2:
-- Corregido set de OBSTACULOS (solo incluye <obstacle>, no <wall>).
+Versión 3:
+- Corregido el bug de "Catch-22" en es_valido.
+- es_valido ahora permite moverse a la celda de un pallet si es el
+  objetivo de la tarea activa.
 - Compatible con Python 3.5 (sin f-strings).
 """
 
@@ -99,7 +101,7 @@ class BusquedaKiva:
                 return pallet
         return None
 
-    def es_valido(self, x, y, pos_pallets):
+    def es_valido(self, x, y, pos_pallets, tareas_pendientes):
         """
         Comprueba si una celda (x, y) es transitable.
         """
@@ -109,18 +111,28 @@ class BusquedaKiva:
         if pos in self.obstaculos_fijos:
             return False
             
-        # 2. Comprobar pallets en el suelo (que no son parte de la request)
-        if self.get_pallet_at(pos, pos_pallets):
+        # 2. Comprobar pallets en el suelo
+        pallet_en_celda = self.get_pallet_at(pos, pos_pallets)
+        if pallet_en_celda:
+            # Hay un pallet. ¿Es un obstáculo?
+            
+            # Si no hay tareas, cualquier pallet es un obstáculo
+            if not tareas_pendientes:
+                return False
+                
+            # Si es el pallet de la tarea activa, NO es un obstáculo
+            id_pallet_activo = tareas_pendientes[0][0]
+            if pallet_en_celda[0] == id_pallet_activo:
+                return True # Se permite moverse encima del pallet objetivo
+            
+            # Es un pallet diferente, SÍ es un obstáculo
             return False
             
-        # 3. Comprobar límites del mapa (inferidos del .world)
-        # Asumimos que el área jugable está contenida y no necesitamos
-        # un chequeo explícito de límites si el mapa está "cerrado" por paredes.
-        # Si la búsqueda se "escapa", añadiremos límites aquí.
+        # 3. Comprobar límites del mapa (ya incluidos en OBSTACULOS)
             
-        return True
+        return True # Celda libre
 
-    def zona_giro_libre(self, x, y, pos_pallets):
+    def zona_giro_libre(self, x, y, pos_pallets, tareas_pendientes):
         """
         Comprueba si las 8 celdas adyacentes están libres para girar cargado.
         """
@@ -128,12 +140,12 @@ class BusquedaKiva:
             for j in [-1, 0, 1]:
                 if i == 0 and j == 0:
                     continue
-                # NOTA: Usamos una versión simplificada de es_valido
-                # que solo comprueba las 2 condiciones principales.
-                pos = (x + i, y + j)
-                if pos in self.obstaculos_fijos:
+                # Usamos la misma lógica de 'es_valido' pero simplificada
+                # (no podemos girar hacia el pallet objetivo)
+                pos_adyacente = (x + i, y + j)
+                if pos_adyacente in self.obstaculos_fijos:
                     return False
-                if self.get_pallet_at(pos, pos_pallets):
+                if self.get_pallet_at(pos_adyacente, pos_pallets):
                     return False
         return True
 
@@ -253,7 +265,8 @@ class BusquedaKiva:
         dx, dy = self.movimientos[rθ]
         (nx, ny) = (rx + dx, ry + dy)
 
-        if self.es_valido(nx, ny, pos_pallets):
+        # Usamos la nueva función es_valido
+        if self.es_valido(nx, ny, pos_pallets, tareas_pendientes):
             nuevo_robot_pose = (nx, ny, rθ)
             nuevo_estado = (nuevo_robot_pose, pallet_cargado, pos_pallets, tareas_pendientes)
             coste_accion = 1 + coste_extra
@@ -263,7 +276,7 @@ class BusquedaKiva:
         for accion, rotacion in [('girar_derecha', self.rotar_derecha), 
                                  ('girar_izquierda', self.rotar_izquierda)]:
             # Precondición de giro cargado
-            if pallet_cargado and not self.zona_giro_libre(rx, ry, pos_pallets):
+            if pallet_cargado and not self.zona_giro_libre(rx, ry, pos_pallets, tareas_pendientes):
                 continue
                 
             nueva_ori = rotacion[rθ]
@@ -337,7 +350,7 @@ class BusquedaKiva:
         start_time = time.time()
 
         # Usamos un dict para rastrear el coste 'g' más bajo a cada estado
-        # Esto combina las listas ABIERTA y CERRADA [cite: 1-9]
+        # Esto combina las listas ABIERTA y CERRADA
         g_costs = { self.estado_inicial: 0 }
 
         # Cola de prioridad (ABIERTA)
@@ -350,6 +363,11 @@ class BusquedaKiva:
         heapq.heappush(abierta, (nodo_inicial.f, nodo_inicial))
         
         nodos_expandidos = 0
+        
+        # --- Variables de Depuración ---
+        nodos_para_informe = 1000 # Reducido para el test 5x5
+        if __name__ == "__main__": # Solo imprimimos si es el test
+             nodos_para_informe = 5 
 
         # Bucle principal de A*
         while abierta:
@@ -359,6 +377,19 @@ class BusquedaKiva:
             # Optimización: Si encontramos un camino peor, lo ignoramos
             if nodo_actual.g > g_costs.get(nodo_actual.estado, float('inf')):
                 continue
+
+            # --- INICIO DE TELEMETRÍA DE DEPURACIÓN ---
+            if nodos_expandidos % nodos_para_informe == 0 and __name__ == "__main__":
+                print("--- Informe de Progreso (Nodo {}) ---".format(nodos_expandidos))
+                print("  Expandiendo Nodo con f={:.2f} (g={:.2f}, h={:.2f})".format(nodo_actual.f, nodo_actual.g, nodo_actual.h))
+                
+                # Extraer y mostrar info clave del estado
+                (robot_pose, pallet_cargado, pos_pallets, tareas_pendientes) = nodo_actual.estado
+                print("  Pose Robot: {}".format(robot_pose))
+                print("  Cargando: {}".format(pallet_cargado))
+                print("  Tareas restantes: {}".format(len(tareas_pendientes)))
+                print("  Accion Previa: {}".format(nodo_actual.accion))
+            # --- FIN DE TELEMETRÍA DE DEPURACIÓN ---
 
             # Comprobar si es un estado final
             if self.es_meta(nodo_actual.estado):
@@ -400,46 +431,39 @@ class BusquedaKiva:
         }
 
 
-# --- 3. EJECUCIÓN DEL MUNDO DE PRUEBA (warehouse0.world) ---
+# --- 3. EJECUCIÓN DEL MUNDO DE PRUEBA (NUEVO TEST 5x5) ---
 
 if __name__ == "__main__":
     
-    print("Configurando el problema 'warehouse0.world'...")
+    print("Configurando el problema 'TEST 5x5'...")
 
-    # 1. OBSTÁCULOS FIJOS (Solo los <obstacle> del .world)
-    #    Las <wall> definen el perímetro, que la búsqueda no alcanzará.
-    #    <obstacle_0> <pose>-4 2 0 0 0 1.57</pose> (2m long, vertical, center -4, 2)
-    #    <obstacle_1> <pose>-1 4 0 0 0 1.57</pose> (2m long, vertical, center -1, 4)
-    #    <obstacle_2> <pose>-1 3 0 0 0 1.57</pose> (2m long, vertical, center -1, 3)
-    #    <obstacle_3> <pose>-4 1 0 0 0 1.57</pose> (2m long, vertical, center -4, 1)
-    #    <obstacle_4> <pose>-4 0 0 0 0 1.57</pose> (2m long, vertical, center -4, 0)
-    #
-    #    ¡CORRECCIÓN IMPORTANTE! Un obstáculo vertical de 2m centrado en (-4, 2)
-    #    ocupa las celdas (-4, 1) y (-4, 2).
-    
+    # 1. OBSTÁCULOS FIJOS (Paredes de un mundo 5x5 + obstáculo central)
     OBSTACULOS = set([
-        (-4, 1), (-4, 2), # obstacle_0
-        (-1, 3), (-1, 4), # obstacle_1
-        (-1, 2), (-1, 3), # obstacle_2
-        (-4, 0), (-4, 1), # obstacle_3
-        (-4, -1), (-4, 0) # obstacle_4
+        # Paredes Exteriores
+        (-1, 0), (-1, 1), (-1, 2), (-1, 3), (-1, 4), # Izquierda
+        (5, 0),  (5, 1),  (5, 2),  (5, 3),  (5, 4),  # Derecha
+        (0, -1), (1, -1), (2, -1), (3, -1), (4, -1), # Abajo
+        (0, 5),  (1, 5),  (2, 5),  (3, 5),  (4, 5),  # Arriba
+        
+        # Obstáculo Interno
+        (2, 2), (2, 3), (2, 4)
     ])
 
     # 2. POSICIÓN INICIAL DEL ROBOT
-    # <pose>-6 2 0 0 0 0</pose> (Yaw=0 es Este)
-    POS_INICIAL_ROBOT = (-6, 2, 1) # (x, y, o) -> o=1 (Este)
+    # (0, 0) mirando al Norte (0)
+    POS_INICIAL_ROBOT = (0, 0, 0) # (x, y, o)
 
     # 3. POSICIÓN INICIAL DE PALLETS
-    # <pose>-3 4 0 0 0 0</pose> (Yaw=0 es Este)
-    ID_PALLET_0 = (-3, 4) # Usamos su pos original como ID
+    # Pallet 'P1' en (4, 4) mirando al Norte (0)
+    ID_PALLET_0 = (4, 4) # Usamos su pos original como ID
     POS_INICIAL_PALLETS = frozenset([
-        (ID_PALLET_0, (-3, 4), 1) # (id, (x,y), o) -> o=1 (Este)
+        (ID_PALLET_0, (4, 4), 0) # (id, (x,y), o)
     ])
     
-    # 4. PETICIÓN (Nuestra 'request' inventada)
-    # Mover pallet de (-3, 4) al destino (0, 5) con orientación Norte (0)
+    # 4. PETICIÓN (Request)
+    # Mover pallet de (4, 4) al destino (0, 4) con orientación Norte (0)
     REQUEST = [
-        ( (-3, 4), (0, 5), 0 ) 
+        ( (4, 4), (0, 4), 0 ) 
     ]
 
     # --- Ejecutar la Búsqueda ---
@@ -466,3 +490,4 @@ if __name__ == "__main__":
     else:
         print("No se pudo encontrar un plan.")
         print("Tiempo Total: {:.4f} seg".format(resultado['tiempo_total']))
+
