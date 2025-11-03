@@ -5,6 +5,13 @@
 0 | R . . . .
   +----------
     0 1 2 3 4
+¡ÉXITO! Solución encontrada.
+--------------------------------------------------
+Coste Total: 62
+Longitud del Plan: 34
+Nodos Expandidos: 3892
+Tiempo Total: 0.0408 seg
+
 --- PLAN ENCONTRADO ---
 Paso 1: mover_adelante
 Paso 2: girar_derecha
@@ -16,14 +23,14 @@ Paso 7: girar_izquierda
 Paso 8: mover_adelante
 Paso 9: mover_adelante
 Paso 10: mover_adelante
-Paso 11: girar_izquierda
+Paso 11: elevar (4, 4)
 Paso 12: girar_izquierda
-Paso 13: elevar (4, 4)
-Paso 14: mover_adelante
+Paso 13: mover_adelante
+Paso 14: girar_izquierda
 Paso 15: mover_adelante
 Paso 16: mover_adelante
-Paso 17: girar_derecha
-Paso 18: mover_adelante
+Paso 17: mover_adelante
+Paso 18: girar_derecha
 Paso 19: mover_adelante
 Paso 20: mover_adelante
 Paso 21: mover_adelante
