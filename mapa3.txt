@@ -1,0 +1,32 @@
+4 | D . . . P
+3 | . . X . .
+2 | . . X . .
+1 | . . . . .
+0 | R . . . .
+  +----------
+    0 1 2 3 4
+PERO DEJAR P HACIA EL SUR OSEA ROTAR 180º
+Paso 1: mover_adelante
+Paso 2: mover_adelante
+Paso 3: mover_adelante
+Paso 4: mover_adelante
+Paso 5: girar_derecha
+Paso 6: mover_adelante
+Paso 7: mover_adelante
+Paso 8: mover_adelante
+Paso 9: mover_adelante
+Paso 10: elevar (4, 4)
+Paso 11: girar_derecha
+Paso 12: girar_derecha
+Paso 13: mover_adelante
+Paso 14: mover_adelante
+Paso 15: mover_adelante
+Paso 16: mover_adelante
+Paso 17: bajar (4, 4)
+Paso 18: girar_izquierda
+Paso 19: mover_adelante
+Paso 20: mover_adelante
+Paso 21: mover_adelante
+Paso 22: mover_adelante
+Paso 23: girar_izquierda
+Paso 24: girar_izquierda
