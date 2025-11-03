@@ -257,17 +257,17 @@ class BusquedaKiva:
         """
         sucesores = []
         robot_pose, pallet_cargado, pos_pallets, tareas_pendientes = estado_actual
-        (rx, ry, rθ) = robot_pose
+        (rx, ry, ro) = robot_pose
 
         coste_extra = 1 if pallet_cargado else 0 # Coste extra por ir cargado
 
         # --- Operador 1: 'mover_adelante' ---
-        dx, dy = self.movimientos[rθ]
+        dx, dy = self.movimientos[ro]
         (nx, ny) = (rx + dx, ry + dy)
 
         # Usamos la nueva función es_valido
         if self.es_valido(nx, ny, pos_pallets, tareas_pendientes):
-            nuevo_robot_pose = (nx, ny, rθ)
+            nuevo_robot_pose = (nx, ny, ro)
             nuevo_estado = (nuevo_robot_pose, pallet_cargado, pos_pallets, tareas_pendientes)
             coste_accion = 1 + coste_extra
             sucesores.append(('mover_adelante', nuevo_estado, coste_accion))
@@ -279,7 +279,7 @@ class BusquedaKiva:
             if pallet_cargado and not self.zona_giro_libre(rx, ry, pos_pallets, tareas_pendientes):
                 continue
                 
-            nueva_ori = rotacion[rθ]
+            nueva_ori = rotacion[ro]
             nuevo_robot_pose = (rx, ry, nueva_ori)
             nuevo_estado = (nuevo_robot_pose, pallet_cargado, pos_pallets, tareas_pendientes)
             coste_accion = 2 + coste_extra
@@ -304,7 +304,7 @@ class BusquedaKiva:
             # Comprobamos que esté libre (debe estarlo, si no, 'mover' no nos habría traído aquí)
             
             id_pallet_bajado = pallet_cargado
-            pallet_a_bajar = (id_pallet_bajado, (rx, ry), rθ) # (id, pos, ori)
+            pallet_a_bajar = (id_pallet_bajado, (rx, ry), ro) # (id, pos, ori)
             
             # Creamos un nuevo frozenset añadiendo el pallet bajado
             nuevo_pos_pallets = pos_pallets | {pallet_a_bajar}
@@ -317,7 +317,7 @@ class BusquedaKiva:
                 
                 if (id_pallet_bajado == id_tarea and 
                     (rx, ry) == pos_tarea and 
-                    rθ == ori_tarea):
+                    ro == ori_tarea):
                     # ¡Tarea completada! Eliminarla de la lista
                     nuevo_tareas_pendientes = tareas_pendientes[1:]
 
