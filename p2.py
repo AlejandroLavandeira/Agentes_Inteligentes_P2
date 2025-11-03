@@ -99,26 +99,7 @@ class BusquedaKiva:
         # 1. Comprobar obstáculos fijos (los <obstacle> del .world)
         if pos in self.obstaculos_fijos:
             return False
-            
-        # 2. Comprobar pallets en el suelo
-        pallet_en_celda = self.get_pallet_at(pos, pos_pallets)
-        if pallet_en_celda:
-            # Hay un pallet. ¿Es un obstáculo?
-            
-            # Si no hay tareas, cualquier pallet es un obstáculo
-            if not tareas_pendientes:
-                return False
-                
-            # Si es el pallet de la tarea activa, NO es un obstáculo
-            id_pallet_activo = tareas_pendientes[0][0]
-            if pallet_en_celda[0] == id_pallet_activo:
-                return True # Se permite moverse encima del pallet objetivo
-            
-            # Es un pallet diferente, SÍ es un obstáculo
-            return False
-            
-        # 3. Comprobar límites del mapa (ya incluidos en OBSTACULOS)
-            
+
         return True # Celda libre
 
     def zona_giro_libre(self, x, y, pos_pallets, tareas_pendientes):
@@ -257,12 +238,27 @@ class BusquedaKiva:
         dx, dy = self.movimientos[ro]
         (nx, ny) = (rx + dx, ry + dy)
 
-        # Usamos la nueva función es_valido para comprobar si nos podemos mover hacia adelante y no hay ningún obstaculo
-        if self.es_valido(nx, ny, pos_pallets, tareas_pendientes):
-            nuevo_robot_pose = (nx, ny, ro)
-            nuevo_estado = (nuevo_robot_pose, pallet_cargado_info, pos_pallets, tareas_pendientes)
-            coste_accion = 1 + coste_extra
-            sucesores.append(('mover_adelante', nuevo_estado, coste_accion))
+        # ¡CAMBIO! La precondición se mueve aquí, fuera de es_valido
+        if self.es_valido(nx, ny, pos_pallets, tareas_pendientes): # Comprueba solo paredes
+            
+            pallet_en_celda = self.get_pallet_at((nx, ny), pos_pallets)
+
+            if pallet_en_celda:
+                # Hay un pallet en la celda destino.
+                if id_pallet_cargado is not None:
+                    # REGLA 1: Si ya vamos cargados, NO PODEMOS movernos a otra celda con pallet.
+                    pallet_en_celda = True # Forza el bloqueo
+                else:
+                    # REGLA 2: Si vamos vacíos, SÍ PODEMOS movernos a la celda del pallet
+                    # (para poder 'elevarlo' en el siguiente estado).
+                    pallet_en_celda = False # Permite el movimiento
+            
+            if not pallet_en_celda:
+                # La celda está libre de paredes Y de pallets
+                nuevo_robot_pose = (nx, ny, ro)
+                nuevo_estado = (nuevo_robot_pose, pallet_cargado_info, pos_pallets, tareas_pendientes)
+                coste_accion = 1 + coste_extra
+                sucesores.append(('mover_adelante', nuevo_estado, coste_accion))
 
         # Operador 2 y 3: girar_derecha y girar_izquierda
         for accion, rotacion in [('girar_derecha', self.rotar_derecha), 
@@ -367,7 +363,7 @@ class BusquedaKiva:
         # --- Variables de Depuración ---
         nodos_para_informe = 1000 # Reducido para el test 5x5
         if __name__ == "__main__": # Solo imprimimos si es el test
-             nodos_para_informe = 200 
+             nodos_para_informe = 200
 
         # Bucle principal de A*
         while abierta:
@@ -446,7 +442,7 @@ if __name__ == "__main__":
         (0, 5),  (1, 5),  (2, 5),  (3, 5),  (4, 5),  # Arriba
         
         # Obstáculo Interno
-        (2, 2), (2, 3)
+        (2, 0), (2, 1), (2, 2), (2, 3) 
     ])
 
     # 2. POSICIÓN INICIAL DEL ROBOT
@@ -456,14 +452,16 @@ if __name__ == "__main__":
     # 3. POSICIÓN INICIAL DE PALLETS
     # Pallet 'P1' en (4, 4) mirando al Norte (0)
     ID_PALLET_0 = (4, 4) # Usamos su pos original como ID
+    ID_PALLET_1 = (2, 4)
     POS_INICIAL_PALLETS = frozenset([
-        (ID_PALLET_0, (4, 4), 0) # (id, (x,y), o)
+        (ID_PALLET_0, (4, 4), 0), # (id, (x,y), o)
+        (ID_PALLET_1, (2, 4), 0)
     ])
     
     # 4. PETICIÓN (Request)
     # Mover pallet de (4, 4) al destino (0, 4) con orientación Norte (0)
     REQUEST = [
-        ( (4, 4), (0, 4), 0 ) 
+        ( (4, 4), (0, 4), 2 ) 
     ]
 
     # --- Ejecutar la Búsqueda ---
