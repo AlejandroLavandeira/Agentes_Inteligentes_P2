@@ -276,8 +276,8 @@ class BusquedaKiva:
         for accion, rotacion in [('girar_derecha', self.rotar_derecha), 
                                  ('girar_izquierda', self.rotar_izquierda)]:
             # Precondición de giro cargado
-            if pallet_cargado and not self.zona_giro_libre(rx, ry, pos_pallets, tareas_pendientes):
-                continue
+            #if pallet_cargado and not self.zona_giro_libre(rx, ry, pos_pallets, tareas_pendientes):
+            #    continue
                 
             nueva_ori = rotacion[ro]
             nuevo_robot_pose = (rx, ry, nueva_ori)
