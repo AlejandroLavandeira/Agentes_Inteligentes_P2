@@ -1,0 +1,143 @@
+4 | D . P . . . . . . . . . . . . . . . . . . . . . P
+3 | . . X . . . . . . . . . . . . . . . . . . . . . .
+2 | . . X . . . . . . . . . . . . . . . . . . . . . .
+1 | . . X . . . . . . . . . . . . . . . . . . . . . .
+0 | . . X . . . . . . . . . . . . . . . . . . . . . .
+9 | . . X . . . . . . . . . . . . . . . . . . . . . .
+8 | . . X . . . . . . . . . . . . . . . . . . . . . .
+7 | . . X . . . . . . . . . . . . . . . . . . . . . .
+6 | . . X . . . . . . . . . . . . . . . . . . . . . .
+5 | . . X . . . . . . . . . . . . . . . . . . . . . .
+4 | . . X . . . . . . . . . . . . . . . . . . . . . .
+3 | . . X . . . . . . . . . . . . . . . . . . . . . .
+2 | . . X . . . . . . . . . . . . . . . . . . . . . .
+1 | . . X . . . . . . . . . . . . . . . . . . . . . .
+0 | . . X . . . . . . . . . . . . . . . . . . . . . .
+9 | . . X . . . . . . . . . . . . . . . . . . . . . .
+8 | . . X . . . . . . . . . . . . . . . . . . . . . .
+7 | . . X . . . . . . . . . . . . . . . . . . . . . .
+6 | . . X . . . . . . . . . . . . . . . . . . . . . .
+5 | . . X . . . . . . . . . . . . . . . . . . . . . .
+4 | . . X . . . . . . . . . . . . . . . . . . . . . .
+3 | . . X . . . . . . . . . . . . . . . . . . . . . .
+2 | . . X . . . . . . . . . . . . . . . . . . . . . .
+1 | . . X . . . . . . . . . . . . . . . . . . . . . .
+0 | R . X . . . . . . . . . . . . . . . . . . . . . .
+  +--------------------------------------------------
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4
+Coste Total: 153
+Longitud del Plan: 110
+Nodos Expandidos: 2251192
+Tiempo Total: 35.4904 seg
+
+--- PLAN ENCONTRADO ---
+Paso 1: mover_adelante
+Paso 2: mover_adelante
+Paso 3: mover_adelante
+Paso 4: mover_adelante
+Paso 5: mover_adelante
+Paso 6: mover_adelante
+Paso 7: mover_adelante
+Paso 8: mover_adelante
+Paso 9: mover_adelante
+Paso 10: mover_adelante
+Paso 11: mover_adelante
+Paso 12: mover_adelante
+Paso 13: mover_adelante
+Paso 14: mover_adelante
+Paso 15: mover_adelante
+Paso 16: mover_adelante
+Paso 17: mover_adelante
+Paso 18: mover_adelante
+Paso 19: mover_adelante
+Paso 20: mover_adelante
+Paso 21: mover_adelante
+Paso 22: mover_adelante
+Paso 23: mover_adelante
+Paso 24: mover_adelante
+Paso 25: girar_derecha
+Paso 26: mover_adelante
+Paso 27: mover_adelante
+Paso 28: elevar (2, 24)
+Paso 29: mover_adelante
+Paso 30: girar_derecha
+Paso 31: mover_adelante
+Paso 32: bajar (2, 24)
+Paso 33: girar_izquierda
+Paso 34: mover_adelante
+Paso 35: mover_adelante
+Paso 36: mover_adelante
+Paso 37: mover_adelante
+Paso 38: mover_adelante
+Paso 39: mover_adelante
+Paso 40: mover_adelante
+Paso 41: mover_adelante
+Paso 42: mover_adelante
+Paso 43: mover_adelante
+Paso 44: mover_adelante
+Paso 45: mover_adelante
+Paso 46: mover_adelante
+Paso 47: mover_adelante
+Paso 48: mover_adelante
+Paso 49: mover_adelante
+Paso 50: mover_adelante
+Paso 51: mover_adelante
+Paso 52: mover_adelante
+Paso 53: mover_adelante
+Paso 54: mover_adelante
+Paso 55: girar_izquierda
+Paso 56: mover_adelante
+Paso 57: girar_izquierda
+Paso 58: elevar (24, 24)
+Paso 59: mover_adelante
+Paso 60: mover_adelante
+Paso 61: mover_adelante
+Paso 62: mover_adelante
+Paso 63: mover_adelante
+Paso 64: mover_adelante
+Paso 65: mover_adelante
+Paso 66: mover_adelante
+Paso 67: mover_adelante
+Paso 68: mover_adelante
+Paso 69: mover_adelante
+Paso 70: mover_adelante
+Paso 71: mover_adelante
+Paso 72: mover_adelante
+Paso 73: mover_adelante
+Paso 74: mover_adelante
+Paso 75: mover_adelante
+Paso 76: mover_adelante
+Paso 77: mover_adelante
+Paso 78: mover_adelante
+Paso 79: mover_adelante
+Paso 80: mover_adelante
+Paso 81: mover_adelante
+Paso 82: mover_adelante
+Paso 83: bajar (24, 24)
+Paso 84: girar_izquierda
+Paso 85: mover_adelante
+Paso 86: mover_adelante
+Paso 87: mover_adelante
+Paso 88: mover_adelante
+Paso 89: mover_adelante
+Paso 90: mover_adelante
+Paso 91: mover_adelante
+Paso 92: mover_adelante
+Paso 93: mover_adelante
+Paso 94: mover_adelante
+Paso 95: mover_adelante
+Paso 96: mover_adelante
+Paso 97: mover_adelante
+Paso 98: mover_adelante
+Paso 99: mover_adelante
+Paso 100: mover_adelante
+Paso 101: mover_adelante
+Paso 102: mover_adelante
+Paso 103: mover_adelante
+Paso 104: mover_adelante
+Paso 105: mover_adelante
+Paso 106: mover_adelante
+Paso 107: mover_adelante
+Paso 108: mover_adelante
+Paso 109: girar_derecha
+Paso 110: girar_derecha
