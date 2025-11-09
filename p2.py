@@ -36,17 +36,15 @@ class Nodo:
         return "Nodo(f={}, g={}, h={}, estado={})".format(self.f, self.g, self.h, self.estado)
 
 
-# Creamos la clase de Busqueda del robor para implementar el motor del algoritmo de busqueda de A*
+# Creamos la clase de Busqueda del robot para implementar el motor del algoritmo de busqueda de A*
 class BusquedaKiva:
 
     def __init__(self, obstaculos_fijos, pos_inicial_pallets, pos_inicial_robot, request):
         """
         Inicializa el problema de búsqueda.
-
-        Args:
+        Argumentos:
             obstaculos_fijos (set): Un set de tuplas (x, y) de paredes y obstáculos.
-            pos_inicial_pallets (frozenset): Un frozenset de tuplas (id, (x, y), o),
-                                            donde 'id' es la pos original (Px, Py).
+            pos_inicial_pallets (frozenset): Un frozenset de tuplas (id, (x, y), o), donde 'id' es la pos original (Px, Py).
             pos_inicial_robot (tuple): Tupla (x, y, o) de la pose inicial del robot.
             request (list): Lista de tuplas de tarea [((Px,Py), (Ex,Ey), O_final), ...].
         """
@@ -75,43 +73,37 @@ class BusquedaKiva:
         self.rotar_izquierda = {0: 3, 3: 2, 2: 1, 1: 0}
 
     # Creamos las funciones de ayuda para crear nuestro algoritmo de busqueda
-
+    
+    # Calculamos la distancia Manhattan (coste mínimo de movimiento).
     def manhattan(self, pos1, pos2):
-        """Calcula la distancia Manhattan (coste mínimo de movimiento)."""
+       
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
+    # Devolvemos  el pallet (id, (x,y), o) en una posición dada, o None.
     def get_pallet_at(self, pos, pos_pallets):
-        """
-        Devuelve el pallet (id, (x,y), o) en una posición dada, o None.
-        """
         for pallet in pos_pallets:
             # Comparamos solo la posición (x,y)
             if pallet[1] == pos:
                 return pallet
         return None
 
+    # Comprobamos si una celda (x, y) es transitable.
     def es_valido(self, x, y, pos_pallets, tareas_pendientes):
-        """
-        Comprueba si una celda (x, y) es transitable.
-        """
         pos = (x, y)
         
-        # 1. Comprobar obstáculos fijos (los <obstacle> del .world)
+        # Comprobamos los obstáculos fijos (los <obstacle> del .world)
         if pos in self.obstaculos_fijos:
             return False
 
-        return True # Celda libre
+        return True
 
+    # Comprobamos si las 8 celdas adyacentes están libres para girar cargado.
+    # TENEMOS QUE BORRAR ESTO CLARAMENTE
     def zona_giro_libre(self, x, y, pos_pallets, tareas_pendientes):
-        """
-        Comprueba si las 8 celdas adyacentes están libres para girar cargado.
-        """
         for i in [-1, 0, 1]:
             for j in [-1, 0, 1]:
                 if i == 0 and j == 0:
                     continue
-                # Usamos la misma lógica de 'es_valido' pero simplificada
-                # (no podemos girar hacia el pallet objetivo)
                 pos_adyacente = (x + i, y + j)
                 if pos_adyacente in self.obstaculos_fijos:
                     return False
@@ -119,12 +111,10 @@ class BusquedaKiva:
                     return False
         return True
 
-    # --- 2.2. Funciones Clave de A* (Meta, Heurística, Sucesores) ---
+    # Ccreamos las funciones Clave de A* (Meta, Heurística, Sucesores)
 
+    # Comprobamos si el estado actual es un estado final (objetivo).
     def es_meta(self, estado):
-        """
-        Comprueba si el estado actual es un estado final (objetivo).
-        """
         robot_pose, pallet_cargado, pos_pallets, tareas_pendientes = estado
 
         # Condición 1: No debe haber tareas pendientes
@@ -150,26 +140,22 @@ class BusquedaKiva:
             if not pallet_encontrado:
                 return False # El pallet no está en la posición de entrega
             
-            # Comparamos id, posicion y orientación
+            # Comparamos id, posicion y orientación del pallet
             if pallet_encontrado[0] != id_pallet_original or pallet_encontrado[2] != meta_ori:
-                # El pallet equivocado está aquí, o la orientación es incorrecta
                 return False
 
         # Si todo se cumple, es un estado meta
         return True
 
+    # Calculamos la heuristica admisible h(n) para un estado dado. Sumamos los costes fijos (elevar/bajar) y las distancias Manhattan.
     def calcular_heuristica(self, estado):
-        """
-        Calcula la heurística admisible h(n) para un estado dado.
-        Suma los costes fijos (elevar/bajar) y las distancias Manhattan.
-        """
         robot_pose, pallet_cargado_info, pos_pallets, tareas_pendientes = estado
         coste_h = 0
         pos_actual_robot = (robot_pose[0], robot_pose[1])
         pos_casa = (self.pos_inicial_robot[0], self.pos_inicial_robot[1])
 
         if not tareas_pendientes:
-            # No hay tareas, solo coste de volver a casa desde la posición actual
+            # Si hay tareas, solo coste de volver a casa desde la posición actual
             return self.manhattan(pos_actual_robot, pos_casa)
 
         # Coste de la tarea activa, la primera en tareas pendientes
@@ -183,25 +169,20 @@ class BusquedaKiva:
         id_pallet_cargado = pallet_cargado_info[0] if pallet_cargado_info else None
 
         if id_pallet_cargado == id_pallet_activo:
-            # 1a. Ya tiene el pallet: Coste(Robot -> Destino) + Bajar
+            # Si ya tenemos el pallet cargado: Coste(Robot al Destino) + Bajar
             coste_h += self.manhattan(pos_actual_robot, pos_destino_activo) + 3
         else:
-            # Va vacío: Coste(Robot -> Pallet) + Elevar + Coste(Pallet -> Destino) + Bajar
-            # Buscamos la posición actual del pallet (por si se ha movido)
+            # Si vamos vacios: Coste(Robot al Pallet) + Elevar + Coste(Pallet al Destino) + Bajar
+            # Buscamos la posición actual del pallet
             pos_actual_pallet = None
             for p in pos_pallets:
                 if p[0] == id_pallet_activo:
                     pos_actual_pallet = p[1]
                     break
             # Si el pallet no está en el suelo, es que lo llevamos encima
-            # o algo va mal, pero para la heurística asumimos que está donde debería
             if pos_actual_pallet is None:
-                # Esto puede pasar si el pallet_cargado es OTRO pallet
-                # En ese caso, el coste es:
-                # Robot -> pos_temp -> Pallet_activo -> Destino_activo
-                # Lo simplificamos (admisible) a:
                 # Robot -> Pallet_activo -> Destino_activo
-                pos_actual_pallet = pos_pallet_activo # Asumimos su pos original
+                pos_actual_pallet = pos_pallet_activo
 
             coste_h += self.manhattan(pos_actual_robot, pos_actual_pallet) + 3
             coste_h += self.manhattan(pos_actual_pallet, pos_destino_activo) + 3
@@ -213,70 +194,59 @@ class BusquedaKiva:
             pos_destino = tarea[1]
             pos_ultimo_destino = pos_destino
             
-            # Coste(Pallet -> Destino) + Elevar + Bajar
+            # Coste(Pallet al Destino) + Elevar + Bajar
             coste_h += self.manhattan(pos_pallet, pos_destino) + 6
 
         # Coste de regresar a casa desde el ultima posición.
         coste_h += self.manhattan(pos_ultimo_destino, pos_casa)
-
         return coste_h
 
 
+    # Generamos todos los estados sucesores validos desde el estado actual devolvemos una lista de tuplas: (accion, nuevo_estado, coste_accion)
     def get_sucesores(self, estado_actual):
-        """
-        Genera todos los estados sucesores válidos desde el estado actual.
-        Devuelve una lista de tuplas: (accion, nuevo_estado, coste_accion)
-        """
         sucesores = []
         robot_pose, pallet_cargado_info, pos_pallets, tareas_pendientes = estado_actual
         (rx, ry, ro) = robot_pose
 
         id_pallet_cargado = pallet_cargado_info[0] if pallet_cargado_info else None
-        coste_extra = 1 if id_pallet_cargado else 0 # Coste extra por ir cargado
+        coste_extra = 1 if id_pallet_cargado else 0
 
         # Operador 1: mover_adelante
         dx, dy = self.movimientos[ro]
         (nx, ny) = (rx + dx, ry + dy)
 
-        # ¡CAMBIO! La precondición se mueve aquí, fuera de es_valido
-        if self.es_valido(nx, ny, pos_pallets, tareas_pendientes): # Comprueba solo paredes
+        # Comprobamos si nos podemos mover a la siguiente celda calculada
+        if self.es_valido(nx, ny, pos_pallets, tareas_pendientes):
             
             pallet_en_celda = self.get_pallet_at((nx, ny), pos_pallets)
 
             if pallet_en_celda:
                 # Hay un pallet en la celda destino.
                 if id_pallet_cargado is not None:
-                    # REGLA 1: Si ya vamos cargados, NO PODEMOS movernos a otra celda con pallet.
-                    pallet_en_celda = True # Forza el bloqueo
+                    # Si ya vamos cargados, no podemos movernos a otra celda con pallet
+                    pallet_en_celda = True
                 else:
-                    # REGLA 2: Si vamos vacíos, SÍ PODEMOS movernos a la celda del pallet
-                    # (para poder 'elevarlo' en el siguiente estado).
-                    pallet_en_celda = False # Permite el movimiento
+                    # Si vamos vacios, podemos movernos a la celda del pallet
+                    pallet_en_celda = False
             
             if not pallet_en_celda:
-                # La celda está libre de paredes Y de pallets
                 nuevo_robot_pose = (nx, ny, ro)
                 nuevo_estado = (nuevo_robot_pose, pallet_cargado_info, pos_pallets, tareas_pendientes)
                 coste_accion = 1 + coste_extra
                 sucesores.append(('mover_adelante', nuevo_estado, coste_accion))
 
         # Operador 2 y 3: girar_derecha y girar_izquierda
-        for accion, rotacion in [('girar_derecha', self.rotar_derecha), 
-                                 ('girar_izquierda', self.rotar_izquierda)]:
-            # Precondición de giro cargado
-            #if pallet_cargado and not self.zona_giro_libre(rx, ry, pos_pallets, tareas_pendientes):
-            #    continue
-                
+        for accion, rotacion in [('girar_derecha', self.rotar_derecha), ('girar_izquierda', self.rotar_izquierda)]:
             nueva_ori = rotacion[ro]
             nuevo_robot_pose = (rx, ry, nueva_ori)
             nuevo_estado = (nuevo_robot_pose, pallet_cargado_info, pos_pallets, tareas_pendientes)
             coste_accion = 2 + coste_extra
             sucesores.append((accion, nuevo_estado, coste_accion))
 
-        # --- Operador 4: 'elevar_pallet' ---
-        if id_pallet_cargado is None: # Precondición: no llevar nada
+        # Operador 4: elevar_pallet
+        if id_pallet_cargado is None: # Precondicion: no llevar nada
             pallet_debajo = self.get_pallet_at((rx, ry), pos_pallets)
-            if pallet_debajo: # Precondición: estar sobre un pallet
+            if pallet_debajo: # Precondición: estar debajo de un pallet
                 id_pallet_elevado = pallet_debajo[0]
                 ori_pallet_suelo = pallet_debajo[2]
                 
@@ -290,16 +260,13 @@ class BusquedaKiva:
                 coste_accion = 3
                 sucesores.append(('elevar {}'.format(id_pallet_elevado), nuevo_estado, coste_accion))
 
-        # --- Operador 5: 'bajar_pallet' ---
-        if id_pallet_cargado is not None: # Precondición: llevar un pallet
+        # Operador 5: bajar_pallet
+        if id_pallet_cargado is not None: # Precondicion: llevar un pallet
             
             id_pallet_bajado, ori_relativa = pallet_cargado_info
-            
-            # ¡NUEVA LÓGICA DE FÍSICA!
-            # Calculamos la orientación absoluta del pallet al bajarlo
+            # Calculamos la orientacion absoluta del pallet al bajarlo
             ori_absoluta_pallet = (ro + ori_relativa) % 4
-
-            pallet_a_bajar = (id_pallet_bajado, (rx, ry), ori_absoluta_pallet) # (id, pos, ori_absoluta)
+            pallet_a_bajar = (id_pallet_bajado, (rx, ry), ori_absoluta_pallet)
             
             # Creamos un nuevo frozenset añadiendo el pallet bajado
             nuevo_pos_pallets = pos_pallets | {pallet_a_bajar}
@@ -310,11 +277,10 @@ class BusquedaKiva:
                 tarea_activa = tareas_pendientes[0]
                 id_tarea, pos_tarea, ori_tarea = tarea_activa[0], tarea_activa[1], tarea_activa[2]
 
-                # ¡CAMBIO! Comparamos con la orientación absoluta del PALLET
+                # Comparamos con la orientación absoluta del PALLET
                 if (id_pallet_bajado == id_tarea and 
                     (rx, ry) == pos_tarea and 
                     ori_absoluta_pallet == ori_tarea):
-                    # ¡Tarea completada! Eliminarla de la lista
                     nuevo_tareas_pendientes = tareas_pendientes[1:]
 
             nuevo_estado = (robot_pose, None, nuevo_pos_pallets, nuevo_tareas_pendientes)
@@ -323,12 +289,10 @@ class BusquedaKiva:
         
         return sucesores
 
-    # --- 2.3. El Motor A* ---
-    
+    # Creamos el Motor de nuestro algoritmo de A*
+
+    # Recorremos los punteros padre para construir el plan final.
     def reconstruir_camino(self, nodo_final):
-        """
-        Recorre los punteros 'padre' para construir el plan final.
-        """
         camino = []
         coste_total = nodo_final.g
         actual = nodo_final
@@ -338,19 +302,13 @@ class BusquedaKiva:
         camino.reverse()
         return camino, coste_total
 
+    # Ejecutamos el bucle principal del algortimo de A*
     def resolver(self):
-        """
-        Ejecuta el bucle principal del algoritmo A*.
-        """
         print("Iniciando búsqueda A*...")
         start_time = time.time()
 
-        # Usamos un dict para rastrear el coste 'g' más bajo a cada estado
-        # Esto combina las listas ABIERTA y CERRADA
+        # Usamos un dict para rastrear el coste 'g' más bajo a cada estado  combinando las listas ABIERTA y CERRADA
         g_costs = { self.estado_inicial: 0 }
-
-        # Cola de prioridad (ABIERTA)
-        # Almacena (f, Nodo)
         h_inicial = self.calcular_heuristica(self.estado_inicial)
         f_inicial = h_inicial
         nodo_inicial = Nodo(self.estado_inicial, None, None, 0, h_inicial, f_inicial)
@@ -360,21 +318,21 @@ class BusquedaKiva:
         
         nodos_expandidos = 0
         
-        # --- Variables de Depuración ---
-        nodos_para_informe = 1000 # Reducido para el test 5x5
-        if __name__ == "__main__": # Solo imprimimos si es el test
+        # Creamos las variables de depuración para ver como evoluciona la creación de nodos
+        nodos_para_informe = 1000
+        if __name__ == "__main__":
              nodos_para_informe = 200
 
-        # Bucle principal de A*
+        # Creamos el bucle principal de A*
         while abierta:
             # Quitar el primer nodo (el mejor) de ABIERTA
             f_actual, nodo_actual = heapq.heappop(abierta)
 
-            # Optimización: Si encontramos un camino peor, lo ignoramos
+            # Optimizacion: Si encontramos un camino peor lo ignoramos
             if nodo_actual.g > g_costs.get(nodo_actual.estado, float('inf')):
                 continue
 
-            # --- INICIO DE TELEMETRÍA DE DEPURACIÓN ---
+            # Creamos nuestros datos para vere la depuración y pruebas del algortimo
             if nodos_expandidos % nodos_para_informe == 0 and __name__ == "__main__":
                 print("--- Informe de Progreso (Nodo {}) ---".format(nodos_expandidos))
                 print("  Expandiendo Nodo con f={:.2f} (g={:.2f}, h={:.2f})".format(nodo_actual.f, nodo_actual.g, nodo_actual.h))
@@ -385,9 +343,8 @@ class BusquedaKiva:
                 print("  Cargando: {}".format(pallet_cargado_info))
                 print("  Tareas restantes: {}".format(len(tareas_pendientes)))
                 print("  Accion Previa: {}".format(nodo_actual.accion))
-            # --- FIN DE TELEMETRÍA DE DEPURACIÓN ---
 
-            # Comprobar si es un estado final
+            # Comprobamos si es un estado final
             if self.es_meta(nodo_actual.estado):
                 end_time = time.time()
                 camino, coste = self.reconstruir_camino(nodo_actual)
@@ -399,10 +356,10 @@ class BusquedaKiva:
                     "tiempo_total": end_time - start_time
                 }
             
-            # Expandir N y meterlo en CERRADA (implícito en g_costs)
+            # Expandir N y meterlo en CERRADA
             nodos_expandidos += 1
             
-            # Generar sucesores
+            # Generamos los sucesores
             for accion, estado_sucesor, coste_accion in self.get_sucesores(nodo_actual.estado):
                 nuevo_g = nodo_actual.g + coste_accion
 
@@ -415,10 +372,10 @@ class BusquedaKiva:
                     padre = nodo_actual
                     nuevo_nodo = Nodo(estado_sucesor, padre, accion, nuevo_g, h, f)
                     
-                    # Insertar 's' en orden en ABIERTA
+                    # Insertamos s en orden en ABIERTA
                     heapq.heappush(abierta, (f, nuevo_nodo))
 
-        # Si ABIERTA se vacía, no hay solución
+        # Si abierta se vacia, no hay solucion
         end_time = time.time()
         print("FRACASO. No se encontró solución.")
         return {
@@ -427,47 +384,43 @@ class BusquedaKiva:
         }
 
 
-# --- 3. EJECUCIÓN DEL MUNDO DE PRUEBA (NUEVO TEST 5x5) ---
+# Ejecutamos los mundos de prueba
 
 if __name__ == "__main__":
     
     print("Configurando el problema 'TEST 5x5'...")
 
-    # 1. OBSTÁCULOS FIJOS (Paredes de un mundo 5x5 + obstáculo central)
-    OBSTACULOS = set([
-        # Paredes Exteriores
-        (-1, 0), (-1, 1), (-1, 2), (-1, 3), (-1, 4), # Izquierda
-        (5, 0),  (5, 1),  (5, 2),  (5, 3),  (5, 4),  # Derecha
-        (0, -1), (1, -1), (2, -1), (3, -1), (4, -1), # Abajo
-        (0, 5),  (1, 5),  (2, 5),  (3, 5),  (4, 5),  # Arriba
-        
-        # Obstáculo Interno
-        (2, 0), (2, 1), (2, 2), (2, 3) 
-    ])
+    # 1. OBSTÁCULOS FIJOS -> (Paredes y obstaculos centrales)
+    N = 100
+    OBSTACULOS = set()
 
-    # 2. POSICIÓN INICIAL DEL ROBOT
-    # (0, 0) mirando al Norte (0)
+    for i in range(N):
+        OBSTACULOS.add((-1, i))
+        OBSTACULOS.add((N, i))
+        OBSTACULOS.add((i, -1))
+        OBSTACULOS.add((i, N))
+
+    obstaculo_interno = set()
+    for y in range(N - 1):  # El rango es 0 a 99 (N-1 = 99)
+        obstaculo_interno.add((2, y))
+
+    OBSTACULOS.update(obstaculo_interno)
+
+    # 2. POSICIÓN INICIAL DEL ROBOT -> (0, 0) mirando al Norte (0)
     POS_INICIAL_ROBOT = (0, 0, 0) # (x, y, o)
 
-    # 3. POSICIÓN INICIAL DE PALLETS
-    # Pallet 'P1' en (4, 4) mirando al Norte (0)
-    ID_PALLET_0 = (4, 4) # Usamos su pos original como ID
+    # 3. POSICIÓN INICIAL DE PALLETS -> Pallet 'P0' en (4, 4) mirando al Norte (0)
+    ID_PALLET_0 = (4, 4)
     ID_PALLET_1 = (2, 4)
-    POS_INICIAL_PALLETS = frozenset([
-        (ID_PALLET_0, (4, 4), 0), # (id, (x,y), o)
-        (ID_PALLET_1, (2, 4), 0)
-    ])
+    POS_INICIAL_PALLETS = frozenset([(ID_PALLET_0, (4, 4), 0), (ID_PALLET_1, (2, 4), 0)])
     
-    # 4. PETICIÓN (Request)
-    # Mover pallet de (4, 4) al destino (0, 4) con orientación Norte (0)
-    REQUEST = [
-        ( (4, 4), (0, 4), 2 ) 
-    ]
+    # 4. PETICIÓN -> Mover pallet de (4, 4) al destino (0, 4) con orientación Norte (0)
+    REQUEST = [( (4, 4), (0, 4), 2 )]
 
-    # --- Ejecutar la Búsqueda ---
+    # Ejecutamos la busqueda
     problema = BusquedaKiva(OBSTACULOS, POS_INICIAL_PALLETS, POS_INICIAL_ROBOT, REQUEST)
     
-    # Imprimir un resumen del estado inicial
+    # Imprimimos un resumen del estado inicial
     print("Estado Inicial: {}".format(problema.estado_inicial))
     print("Heurística Inicial: {}".format(problema.calcular_heuristica(problema.estado_inicial)))
     print("--------------------------------------------------")
