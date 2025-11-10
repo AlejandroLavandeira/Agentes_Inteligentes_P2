@@ -10,10 +10,12 @@
 0 | R . X . . . . . . D
   +--------------------
     0 1 2 3 4 5 6 7 8 9
+
+Heurística Inicial: 42
 Coste Total: 121
 Longitud del Plan: 80
 Nodos Expandidos: 7506021
-Tiempo Total: 154.1389 seg
+Tiempo Total: 188.8992 seg
 
 --- PLAN ENCONTRADO ---
 Paso 1: mover_adelante
