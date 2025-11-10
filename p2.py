@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Motor de Búsqueda A* para la Práctica 2: Búsqueda de Agentes Inteligentes.
-"""
 
 import heapq
 import time
@@ -39,15 +36,15 @@ class Nodo:
 # Creamos la clase de Busqueda del robot para implementar el motor del algoritmo de busqueda de A*
 class BusquedaKiva:
 
+    #Inicializamos el problema de búsqueda.
     def __init__(self, obstaculos_fijos, pos_inicial_pallets, pos_inicial_robot, request):
-        """
-        Inicializa el problema de búsqueda.
-        Argumentos:
-            obstaculos_fijos (set): Un set de tuplas (x, y) de paredes y obstáculos.
-            pos_inicial_pallets (frozenset): Un frozenset de tuplas (id, (x, y), o), donde 'id' es la pos original (Px, Py).
-            pos_inicial_robot (tuple): Tupla (x, y, o) de la pose inicial del robot.
-            request (list): Lista de tuplas de tarea [((Px,Py), (Ex,Ey), O_final), ...].
-        """
+        
+        #Argumentos:
+            #obstaculos_fijos (set): Un set de tuplas (x, y) de paredes y obstáculos.
+            #pos_inicial_pallets (frozenset): Un frozenset de tuplas (id, (x, y), o), donde 'id' es la pos original (Px, Py).
+            #pos_inicial_robot (tuple): Tupla (x, y, o) de la pose inicial del robot.
+            #request (list): Lista de tuplas de tarea [((Px,Py), (Ex,Ey), O_final), ...].
+        
         self.obstaculos_fijos = obstaculos_fijos
         self.pos_inicial_robot = pos_inicial_robot
         
@@ -97,21 +94,7 @@ class BusquedaKiva:
 
         return True
 
-    # Comprobamos si las 8 celdas adyacentes están libres para girar cargado.
-    # TENEMOS QUE BORRAR ESTO CLARAMENTE
-    def zona_giro_libre(self, x, y, pos_pallets, tareas_pendientes):
-        for i in [-1, 0, 1]:
-            for j in [-1, 0, 1]:
-                if i == 0 and j == 0:
-                    continue
-                pos_adyacente = (x + i, y + j)
-                if pos_adyacente in self.obstaculos_fijos:
-                    return False
-                if self.get_pallet_at(pos_adyacente, pos_pallets):
-                    return False
-        return True
-
-    # Ccreamos las funciones Clave de A* (Meta, Heurística, Sucesores)
+    # Creamos las funciones Clave de A* (Meta, Heurística, Sucesores)
 
     # Comprobamos si el estado actual es un estado final (objetivo).
     def es_meta(self, estado):
@@ -321,7 +304,7 @@ class BusquedaKiva:
         # Creamos las variables de depuración para ver como evoluciona la creación de nodos
         nodos_para_informe = 1000
         if __name__ == "__main__":
-             nodos_para_informe = 200
+             nodos_para_informe = 200000
 
         # Creamos el bucle principal de A*
         while abierta:
@@ -410,12 +393,12 @@ if __name__ == "__main__":
     POS_INICIAL_ROBOT = (0, 0, 0) # (x, y, o)
 
     # 3. POSICIÓN INICIAL DE PALLETS -> Pallet 'P0' en (4, 4) mirando al Norte (0)
-    ID_PALLET_0 = (4, 4)
-    ID_PALLET_1 = (2, 4)
-    POS_INICIAL_PALLETS = frozenset([(ID_PALLET_0, (4, 4), 0), (ID_PALLET_1, (2, 4), 0)])
+    ID_PALLET_0 = (99, 99)
+    ID_PALLET_1 = (2, 99)
+    POS_INICIAL_PALLETS = frozenset([(ID_PALLET_0, (99, 99), 0), (ID_PALLET_1, (2, 99), 0)])
     
     # 4. PETICIÓN -> Mover pallet de (4, 4) al destino (0, 4) con orientación Norte (0)
-    REQUEST = [( (4, 4), (0, 4), 2 )]
+    REQUEST = [((2, 99), (99, 98), 0), ((99, 99), (0, 99), 0)]
 
     # Ejecutamos la busqueda
     problema = BusquedaKiva(OBSTACULOS, POS_INICIAL_PALLETS, POS_INICIAL_ROBOT, REQUEST)
