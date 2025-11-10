@@ -28,7 +28,7 @@
 Coste Total: 153
 Longitud del Plan: 110
 Nodos Expandidos: 2251192
-Tiempo Total: 35.4904 seg
+Tiempo Total: 67.7581 seg
 
 --- PLAN ENCONTRADO ---
 Paso 1: mover_adelante
