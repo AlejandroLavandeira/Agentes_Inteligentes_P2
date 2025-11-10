@@ -393,12 +393,12 @@ if __name__ == "__main__":
     POS_INICIAL_ROBOT = (0, 0, 0) # (x, y, o)
 
     # 3. POSICIÓN INICIAL DE PALLETS -> Pallet 'P0' en (4, 4) mirando al Norte (0)
-    ID_PALLET_0 = (99, 99)
-    ID_PALLET_1 = (2, 99)
-    POS_INICIAL_PALLETS = frozenset([(ID_PALLET_0, (99, 99), 0), (ID_PALLET_1, (2, 99), 0)])
+    ID_PALLET_0 = (24, 24)
+    ID_PALLET_1 = (2, 24)
+    POS_INICIAL_PALLETS = frozenset([(ID_PALLET_0, (24, 24), 0), (ID_PALLET_1, (2, 24), 0)])
     
     # 4. PETICIÓN -> Mover pallet de (4, 4) al destino (0, 4) con orientación Norte (0)
-    REQUEST = [((2, 99), (99, 98), 0), ((99, 99), (0, 99), 0)]
+    REQUEST = [((2, 24), (24, 23), 0), ((24, 24), (0, 24), 0)]
 
     # Ejecutamos la busqueda
     problema = BusquedaKiva(OBSTACULOS, POS_INICIAL_PALLETS, POS_INICIAL_ROBOT, REQUEST)
