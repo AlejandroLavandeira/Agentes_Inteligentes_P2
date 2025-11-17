@@ -5,10 +5,11 @@
 0 | R . X . .
   +----------
     0 1 2 3 4
+Heurística Inicial: 22
 Coste Total: 76
 Longitud del Plan: 42
-Nodos Expandidos: 359278
-Tiempo Total: 14.5146 seg
+Nodos Expandidos: 358867
+Tiempo Total: 8.2720 seg
 
 --- PLAN ENCONTRADO ---
 Paso 1: mover_adelante
@@ -20,11 +21,11 @@ Paso 6: mover_adelante
 Paso 7: mover_adelante
 Paso 8: girar_derecha
 Paso 9: girar_derecha
-Paso 10: elevar (2, 4)
+Paso 10: elevar (3, 4)
 Paso 11: mover_adelante
 Paso 12: girar_izquierda
 Paso 13: mover_adelante
-Paso 14: bajar (2, 4)
+Paso 14: bajar (3, 4)
 Paso 15: girar_derecha
 Paso 16: girar_derecha
 Paso 17: mover_adelante
@@ -51,5 +52,5 @@ Paso 37: mover_adelante
 Paso 38: mover_adelante
 Paso 39: mover_adelante
 Paso 40: mover_adelante
-Paso 41: girar_derecha
-Paso 42: girar_derecha
+Paso 41: girar_izquierda
+Paso 42: girar_izquierda
