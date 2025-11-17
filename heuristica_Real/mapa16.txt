@@ -1,0 +1,70 @@
+9 | D . . . . . . . . P
+8 | . . X . . . . . . .
+7 | . . X . . . . . . .
+6 | . . X . . . . . . .
+5 | . . X . . . . . . .
+4 | . . X . . . . . . .
+3 | . . X . . . . . . .
+2 | . . X . . . . . . .
+1 | . . X . . . . . . .
+0 | R . X . . . . . . .
+  +--------------------
+    0 1 2 3 4 5 6 7 8 9
+
+Heurística Inicial: 42
+Coste Total: 78
+Longitud del Plan: 50
+Nodos Expandidos: 75709
+Tiempo Total: 1.1612 seg
+
+--- PLAN ENCONTRADO ---
+Paso 1: mover_adelante
+Paso 2: mover_adelante
+Paso 3: mover_adelante
+Paso 4: mover_adelante
+Paso 5: mover_adelante
+Paso 6: mover_adelante
+Paso 7: mover_adelante
+Paso 8: mover_adelante
+Paso 9: mover_adelante
+Paso 10: girar_derecha
+Paso 11: mover_adelante
+Paso 12: mover_adelante
+Paso 13: elevar (2, 9)
+Paso 14: mover_adelante
+Paso 15: girar_derecha
+Paso 16: mover_adelante
+Paso 17: bajar (2, 9)
+Paso 18: girar_izquierda
+Paso 19: mover_adelante
+Paso 20: mover_adelante
+Paso 21: mover_adelante
+Paso 22: mover_adelante
+Paso 23: mover_adelante
+Paso 24: mover_adelante
+Paso 25: girar_izquierda
+Paso 26: mover_adelante
+Paso 27: girar_izquierda
+Paso 28: elevar (9, 9)
+Paso 29: mover_adelante
+Paso 30: mover_adelante
+Paso 31: mover_adelante
+Paso 32: mover_adelante
+Paso 33: mover_adelante
+Paso 34: mover_adelante
+Paso 35: mover_adelante
+Paso 36: mover_adelante
+Paso 37: mover_adelante
+Paso 38: bajar (9, 9)
+Paso 39: girar_izquierda
+Paso 40: mover_adelante
+Paso 41: mover_adelante
+Paso 42: mover_adelante
+Paso 43: mover_adelante
+Paso 44: mover_adelante
+Paso 45: mover_adelante
+Paso 46: mover_adelante
+Paso 47: mover_adelante
+Paso 48: mover_adelante
+Paso 49: girar_derecha
+Paso 50: girar_derecha
